@@ -2,10 +2,19 @@
 
 namespace App\Http\Resources;
 
+use App\Models\JobDepartment;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class JobResource extends JsonResource
 {
+    public function Departments() {
+        $jobsdepartment = JobDepartment::with("department")->where("wwph_job_id", $this->id)->get();
+        $departments = [];
+        foreach ($jobsdepartment as $dept) {
+            $departments = [...$departments, $dept->department];
+        }
+        return $departments;
+    }
     /**
      * Transform the resource into an array.
      *
@@ -30,6 +39,8 @@ class JobResource extends JsonResource
             'experience' => $this->experience,
             'date_posted' => $this->date_published,
             'slug' => $this->slug,
+            'benefits' => $this->benefits,
+            'departments' => $this->Departments()
         ];
     }
 }

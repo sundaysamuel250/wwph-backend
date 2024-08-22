@@ -16,7 +16,7 @@ class AddColumnToUsersTable extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->string('phone_no')->nullable()->after('password');
             $table->text('address')->nullable()->after('password');
-            $table->string('role')->default('General')->after('password');
+            $table->string('role')->default('1')->after('password');
             $table->string('language')->nullable()->after('password');
             $table->string('status')->default('Active')->after('password');
         });

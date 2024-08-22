@@ -11,6 +11,9 @@ class JobDepartment extends Model
     protected $guarded = [];
 
     public function Jobs () {
-        return $this->hasMany(WwphJob::class)->where("status", "active");
+        return $this->hasMany(WwphJob::class, "id", "wwph_job_id")->where("status", "active");
+    }
+    public function Department () {
+        return $this->belongsTo(Department::class)->where("status", "active");
     }
 }

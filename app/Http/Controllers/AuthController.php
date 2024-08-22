@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\ForgotPasswordEvent;
+use App\Http\Resources\UserResource;
 use App\Mail\PasswordResetMail;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -26,37 +27,57 @@ class AuthController extends Controller
     {
         $validated = $request->all();
         $validator = Validator::make($validated, [
-            'email' => 'required|string|email|unique:users,email',
+            'email' => 'required|string|email',
             'last_name' => 'required|string|min:3',
             'first_name' => 'required|string|min:3',
             'password' => 'required|string|min:8',
             'newsletter' => 'integer|nullable|in:1'
         ]);
 
-        if($validator->fails()) {
+        if ($validator->fails()) {
             $erro = json_decode($validator->errors(), true);
             $msg = array_values($erro)[0];
-           
 
-            return errorResponse( $msg[0], $erro);
+
+            return errorResponse($msg[0], $erro);
         }
         $newsletter = (isset($validated['newsletter'])) ? $validated['newsletter'] : 0;
-        $userRole = Role::where("title", "User")->first();
-        $user = User::create([
-            'email' => $validated['email'],
-            'first_name' => $validated['first_name'],
-            'last_name' => $validated['last_name'],
-            'name' => $validated['first_name']. ' '.$validated['last_name'],
-            'password' => bcrypt($validated['password']),
-            'newsletter' => $newsletter,
-            'email_verified_at' => now(),
-            'role' => $userRole ? $userRole->id : 1
-        ]);
+        $isUser = User::where("email", $validated["email"])->first();
+        if ($isUser) {
+            if ($isUser->status == "deleted") {
+                $userRole = Role::where("title", "User")->first();
+                $isUser->update([
+                    'first_name' => $validated['first_name'],
+                    'last_name' => $validated['last_name'],
+                    'name' => $validated['first_name'] . ' ' . $validated['last_name'],
+                    'password' => bcrypt($validated['password']),
+                    'newsletter' => $newsletter,
+                    'email_verified_at' => now(),
+                    'role' => $userRole ? $userRole->id : 1
+                ]);
+                $isUser->status = "Active";
+                $isUser->save();
+            } else {
+                return errorResponse("User already exist");
+            }
+        } else {
+            $userRole = Role::where("title", "User")->first();
+            $user = User::create([
+                'email' => $validated['email'],
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'name' => $validated['first_name'] . ' ' . $validated['last_name'],
+                'password' => bcrypt($validated['password']),
+                'newsletter' => $newsletter,
+                'email_verified_at' => now(),
+                'role' => $userRole ? $userRole->id : 1
+            ]);
+        }
 
         try {
             // event(new Registered($user));
         } catch (\Exception $e) {
-           
+
             return errorResponse("Failed to create user",  $e->getMessage(), 500);
         }
 
@@ -65,14 +86,14 @@ class AuthController extends Controller
 
 
 
-     /**
-    * @OA\Post(
-    *     path="/api/v1/login",
-    *     operationId="login",
-    *     summary="Logs in user",
-    *     tags={"Users"},
-    *     description="Logs in user and gives access to authenticated resources",
-    *     @OA\Parameter(
+    /**
+     * @OA\Post(
+     *     path="/api/v1/login",
+     *     operationId="login",
+     *     summary="Logs in user",
+     *     tags={"Users"},
+     *     description="Logs in user and gives access to authenticated resources",
+     *     @OA\Parameter(
      *          name="email",
      *          description="Email Field",
      *          required=true,
@@ -90,7 +111,7 @@ class AuthController extends Controller
      *              type="string"
      *          )
      *     ),
-    *     @OA\Response(response="200", description="Display a credential User."),
+     *     @OA\Response(response="200", description="Display a credential User."),
      *      @OA\Response(
      *          response=400,
      *          description="Bad Request"
@@ -107,8 +128,8 @@ class AuthController extends Controller
      *          response=404,
      *          description="Not found"
      *      ),
-    * )
-    */
+     * )
+     */
     public function login(Request $request)
     {
         $validated = $request->all();
@@ -117,15 +138,15 @@ class AuthController extends Controller
             'password' => 'required|string'
         ]);
 
-        if($validator->fails()) {
+        if ($validator->fails()) {
             $erro = json_decode($validator->errors(), true);
             $msg = array_values($erro)[0];
-           
 
-            return errorResponse( $msg[0], $erro);
+
+            return errorResponse($msg[0], $erro);
         }
-        
-        if (!$token=auth()->attempt(['email' => $validated['email'], 'password' => $validated['password']])) {
+
+        if (!$token = auth()->attempt(['email' => $validated['email'], 'password' => $validated['password']])) {
             return errorResponse("Invalid login combination", 400);
         }
 
@@ -134,11 +155,15 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             return errorResponse($e->getMessage());
         }
+        if ($user->status === "deleted") {
+            return errorResponse("Account not found!");
+        }
 
         if ($user->email_verified_at === null) {
             return errorResponse("Email not verified");
-
         }
+
+
 
         return $this->createNewToken($token);
     }
@@ -147,11 +172,11 @@ class AuthController extends Controller
     {
         return response()->json([
             'code' => 200,
-            'status'=> 'success',
+            'status' => 'success',
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL()*60,
-            'user' => auth()->user()
+            'expires_in' => auth()->factory()->getTTL() * 60,
+            'user' => new UserResource(auth()->user())
         ]);
     }
 
@@ -163,19 +188,19 @@ class AuthController extends Controller
 
 
     /**
-    * @OA\Post(
-    *     path="/api/v1/logout",
-    *     operationId="logout",
-    *     summary="Logs out user",
-    *     description="Logs out user",
-    *      @OA\Response(
+     * @OA\Post(
+     *     path="/api/v1/logout",
+     *     operationId="logout",
+     *     summary="Logs out user",
+     *     description="Logs out user",
+     *      @OA\Response(
      *          response=200,
      *          description="successful operation",
      *          @OA\JsonContent()
      *       ),
-    *      security={{ "apiAuth": {} }},
-    * )
-    */
+     *      security={{ "apiAuth": {} }},
+     * )
+     */
     public function logout()
     {
         auth()->logout();
@@ -275,7 +300,7 @@ class AuthController extends Controller
         try {
             User::where('email', auth()->user()->email)
                 ->update(['password' => bcrypt($validated['password'])]);
-                return response()->json(['message' => 'Password updated']);
+            return response()->json(['message' => 'Password updated']);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Password update failed']);
         }
@@ -311,7 +336,7 @@ class AuthController extends Controller
     {
         $validated = $request->validate(['email' => 'required|string|email']);
         try {
-            $user = User::where('email', $validated['email'])->first();    
+            $user = User::where('email', $validated['email'])->first();
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -417,8 +442,8 @@ class AuthController extends Controller
 
         try {
             $user = PasswordReset::where('email', $validated['email'])
-                                ->where('token', $validated['token'])
-                                ->first();  
+                ->where('token', $validated['token'])
+                ->first();
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()]);
         }
