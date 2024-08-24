@@ -17,7 +17,7 @@ class EmployerMiddleware
     public function handle(Request $request, Closure $next)
     {
         if(!auth()->user()) return errorResponse("Unauthenticated", [], 321);
-        if(auth()->user()->role !== 2) return errorResponse("Unauthorized", [], 321);
+        if(auth()->user()->role != 2) return errorResponse("Unauthorized", [], 321);
         return $next($request);
     }
 }

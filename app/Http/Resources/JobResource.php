@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\JobApplication;
 use App\Models\JobDepartment;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -15,6 +16,14 @@ class JobResource extends JsonResource
         }
         return $departments;
     }
+    
+    public function Applicants() {
+        $applicantions = JobApplication::where("job_id", $this->id)->get();
+        $applicantions = ApplicationResource::collection($applicantions);
+        return $applicantions;
+    }
+
+    
     /**
      * Transform the resource into an array.
      *
@@ -39,8 +48,10 @@ class JobResource extends JsonResource
             'experience' => $this->experience,
             'date_posted' => $this->date_published,
             'slug' => $this->slug,
+            'status' => $this->status,
             'benefits' => $this->benefits,
-            'departments' => $this->Departments()
+            'departments' => $this->Departments(),
+            'applicants' => $this->Applicants(),
         ];
     }
 }
