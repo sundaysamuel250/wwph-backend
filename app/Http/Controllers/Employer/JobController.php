@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Employer;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\JobResource;
+use App\Models\JobDepartment;
 use App\Models\JobType;
 use App\Models\WwphJob;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -21,7 +23,7 @@ class JobController extends Controller
         $title = $request->query("title");
         $status = $request->query("status") ? $request->query("status") : "";
         $jobType = $request->query("jobType");
-        $jobs = WwphJob::where("company_id", auth()->user()->id);
+        $jobs = WwphJob::where("status", "!=", "deleted")->where("company_id", auth()->user()->id);
         if($status) {
             $jobs = $jobs->where("status", $status);
         }
@@ -32,10 +34,10 @@ class JobController extends Controller
                 $jobs = $jobs->where("job_type", $thJobType->id);
             }
         }
-        $jobs = $jobs->get();
+        $jobs = $jobs->orderBy("id", "DESC")->get();
         $recent = JobResource::collection($jobs);
 
-        return okResponse("fetched jobs", $recent);
+        return okResponse("fetched jobs".auth()->id(), $recent);
     }
     public function shareJob($id)
     {
@@ -77,15 +79,17 @@ class JobController extends Controller
             'title' => 'required|string',
             'description' => 'required|string|min:3',
             'work_type' => 'required',
-            'job_type' => 'required ',
-            'job_type' => 'required ',
-            'category' => 'required ',
-            'salary' => 'required ',
-            'naration' => 'required ',
-            'experience' => 'required ',
-            'education' => 'required ',
-            'job_cover' => 'required ',
-            'benefits' => 'required ',
+            'job_type' => 'required',
+            'category' => 'required',
+            'salary' => 'required',
+            'budget' => 'required',
+            'experience' => 'required',
+            'requirements' => 'required',
+            'job_cover' => '',
+            'skills' => 'required ',
+            'city' => 'required',
+            'state' => 'required',
+            'country' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -94,6 +98,33 @@ class JobController extends Controller
             return errorResponse($msg[0], $erro);
         }
 
+        $job = WwphJob::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'work_type' => $request->work_type,
+            'job_type' => $request->job_type,
+            'salary' => $request->budget,
+            'salary_narration' => $request->salary,
+            'job_role' => $request->title,
+            'experience' => $request->experience,
+            'requirements' => $request->requirements,
+            // 'education' => 'required ',
+            'job_cover' => "cover",
+            'skills' => $request->skills,
+            'application_link' => env("APP_URL"),
+            "closing_date" => Carbon::now()->addMonths(3),
+            'company_id' => auth()->user()->id,
+            'location' => $request->state . ', ' .$request->country,
+            'city' => $request->city,
+            'state' => $request->state,
+            'country' => $request->country,
+        ]);
+        JobDepartment::create([
+            "wwph_job_id" => $job->id,
+            "department_id" => $request->category
+        ]);
+
+        return okResponse("job created");
     }
 
     /**

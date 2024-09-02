@@ -97,14 +97,15 @@ class UserController extends Controller
 
         $user->name = $request->name ? $request->name : $user->name;
         $user->bio = $request->bio ? $request->bio : $user->bio;
-        $user->city = $request->city ? $request->city : $user->city;
-        $user->website = $request->website ? $request->website : $user->website;
-        $user->phone_no = $request->phone_no ? $request->phone_no : $user->phone_no;
-        $user->founded = $request->founded ? $request->founded : $user->founded;
         $user->founded = $request->founded ? $request->founded : $user->founded;
         $user->company_size = $request->company_size ? $request->company_size : $user->company_size;
+        $user->website = $request->website ? $request->website : $user->website;
+        $user->phone_no = $request->phone_no ? $request->phone_no : $user->phone_no;
         $user->about_company = $request->about_company ? $request->about_company : $user->about_company;
-        $user->company_name = $request->company_name ? $request->company_name : $user->company_name;
+
+        $user->city = $request->city ? $request->city : $user->city;
+        $user->zip_code = $request->zipcode ? $request->zipcode : $user->zipcode;
+        $user->company_name = $request->name;
 
         $user->save();
         return okResponse("profile updated");

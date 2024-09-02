@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\ForgotPasswordEvent;
+use App\Http\Resources\CompanyResource;
 use App\Http\Resources\UserResource;
 use App\Mail\PasswordResetMail;
 use Illuminate\Http\Request;
@@ -28,10 +29,12 @@ class AuthController extends Controller
         $validated = $request->all();
         $validator = Validator::make($validated, [
             'email' => 'required|string|email',
-            'last_name' => 'required|string|min:3',
-            'first_name' => 'required|string|min:3',
+            'last_name' => 'string|min:3',
+            'first_name' => 'string|min:3',
+            'name' => 'string|min:3',
             'password' => 'required|string|min:8',
-            'newsletter' => 'integer|nullable|in:1'
+            'newsletter' => 'integer|nullable|in:1',
+            'role' => 'required|string'
         ]);
 
         if ($validator->fails()) {
@@ -41,6 +44,7 @@ class AuthController extends Controller
 
             return errorResponse($msg[0], $erro);
         }
+
         $newsletter = (isset($validated['newsletter'])) ? $validated['newsletter'] : 0;
         $isUser = User::where("email", $validated["email"])->first();
         if ($isUser) {
@@ -61,12 +65,11 @@ class AuthController extends Controller
                 return errorResponse("User already exist");
             }
         } else {
-            $userRole = Role::where("title", "User")->first();
+            $userRole = Role::where("title", $request->role)->first();
+            if(!$userRole) return errorResponse("Invalid user role");
             $user = User::create([
                 'email' => $validated['email'],
-                'first_name' => $validated['first_name'],
-                'last_name' => $validated['last_name'],
-                'name' => $validated['first_name'] . ' ' . $validated['last_name'],
+                'name' => $request->role == "company" ? $validated['name'] : ($validated['first_name'] . ' ' . $validated['last_name']),
                 'password' => bcrypt($validated['password']),
                 'newsletter' => $newsletter,
                 'email_verified_at' => now(),
@@ -170,13 +173,17 @@ class AuthController extends Controller
 
     public function createNewToken($token)
     {
+        $user = User::where("id", auth()->user()->id)->first();
+        $role = $user->UserRole();
+        $user->role = $role->title;
+        $u = $role->title == "Company" ? new CompanyResource(auth()->user()) :  new UserResource(auth()->user());
         return response()->json([
             'code' => 200,
             'status' => 'success',
             'access_token' => $token,
             'token_type' => 'bearer',
             'expires_in' => auth()->factory()->getTTL() * 60,
-            'user' => new UserResource(auth()->user())
+            'user' => $u
         ]);
     }
 

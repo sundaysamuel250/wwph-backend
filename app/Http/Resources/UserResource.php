@@ -39,6 +39,7 @@ class UserResource extends JsonResource
             "bio" => $this->bio,
             "country" => $this->country,
             "city" => $this->city,
+            "wallet" => $this->wallet,
             "state" => $this->state,
             "zip_code" => $this->zip_code,
             "social_medias" => $this->socialMedias()

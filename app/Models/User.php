@@ -21,6 +21,8 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'name',
         'email',
         'password',
+        'role',
+        'wallet',
         'email_verified_at',
     ];
 
@@ -61,6 +63,9 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     }
     public function Role () {
         return $this->hasOne(Role::class, "id", "role");
+    }
+    public function UserRole () {
+        return Role::where("id", $this->role)->first();
     }
     public function UserCountry() {
         return $this->hasOne(Country::class, "code", "country");

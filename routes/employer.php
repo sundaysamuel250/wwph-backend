@@ -1,9 +1,12 @@
 <?php
 
 use App\Http\Controllers\Employer\JobController;
+use App\Http\Controllers\Employer\PaymentController;
 use App\Http\Controllers\Employer\SavedCandidateController;
 use App\Http\Controllers\Employer\UserController;
 use Illuminate\Support\Facades\Route;
+
+// Route::post('/register', 'changePassword');
 
 Route::middleware(['verified', 'jwt.verify', 'auth:api', 'employer'])->group(function () {
     Route::controller(UserController::class)->group(function () {
@@ -29,6 +32,11 @@ Route::middleware(['verified', 'jwt.verify', 'auth:api', 'employer'])->group(fun
         Route::post('saved-candidate', 'store');
         Route::get('saved-candidate/delete/{id}', 'destroy');
     });
-
+    Route::controller(PaymentController::class)->group(function () {
+        Route::post('fund-wallet', 'makePayment');
+        Route::get('transaction', 'transaction');
+        Route::post('verify-payment', 'verifyPayment');
+        Route::post('withdraw-fund', 'withdraw');
+    });
     
 });

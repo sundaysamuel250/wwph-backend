@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class WwphJob extends Model
 {
     use HasFactory;
+    protected $guarded = [];
     public function Company() {
         return $this->belongsTo(User::class, 'company_id', 'id');
     }

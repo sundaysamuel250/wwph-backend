@@ -44,7 +44,8 @@ class CompanyResource extends JsonResource
             "country" => $this->country,
             "city" => $this->city,
             "state" => $this->state,
-            "zip_code" => $this->zip_code,
+            "zipcode" => $this->zip_code,
+            "wallet" => $this->wallet,
             "social_medias" => $this->socialMedias()
         ];
     }
