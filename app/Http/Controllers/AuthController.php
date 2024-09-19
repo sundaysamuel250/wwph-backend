@@ -75,6 +75,49 @@ class AuthController extends Controller
                 'email_verified_at' => now(),
                 'role' => $userRole ? $userRole->id : 1
             ]);
+            
+            // trigger welcom email to user
+            $data = [
+                'title' => "WELCOME TO ". env("APP_NAME") . "– WE'RE EXCITED TO HAVE YOU!",
+                'to' => $user->email,
+                'full_name' => $user->name,
+                'body' => '
+                <p> Welcome to '.env("APP_NAME").'! We’re thrilled to have you as a part of our community. Whether you\'re here to find your Dream Job, for Career tips or Hire Talent, we\'re here to support you every step of the way.</p>
+        
+                <p>If you have any questions or need assistance, feel free to contact our support team.</p>
+                
+                <p>We’re looking forward to seeing what you’ll achieve with '.env("APP_NAME").'.</p>
+               ',
+                'hasButton' => true,
+                'buttonLink' => env('FRONTEND') . '/login',
+                'buttonText' => 'My Account',
+            ];
+            $view = view("emails.template", ["data" => $data])->render();
+            sendMail2($user->email, $data["title"], $view);
+
+            // trigger email to admin
+            $data = [
+                'title' => $request->role == "company" ? "NEW COMPANY REGISTRATION ON ". env("APP_NAME") : "NEW USER REGISTRATION ON ". env("APP_NAME"),
+                'to' => env("ADMIN_EMAIL"),
+                'full_name' => "ADMIN",
+                'body' => '
+                <p>We wanted to inform you that a new user has just registered on '. env("APP_NAME") .' .</p>
+        
+                <p>User Details:</p>
+                <ul>
+                    <li>Name: '.$user->name .'</li>
+                    <li>Email: '.$user->email.'</li>
+                    <li>Date: '.Carbon::createFromDate($user->created_at)->format('Y-m-d H:i:s') .'</li>
+                </ul>
+                
+                <p>We’re looking forward to seeing what you’ll achieve with '.env("APP_NAME").'.</p>
+               ',
+                'hasButton' => true,
+                'buttonLink' => env('FRONTEND') . '/login',
+                'buttonText' => 'My Account',
+            ];
+            $view = view("emails.template", ["data" => $data])->render();
+            sendMail2(env("ADMIN_EMAIL"), $data["title"], $view);
         }
 
         try {

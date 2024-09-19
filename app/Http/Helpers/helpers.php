@@ -152,7 +152,7 @@ if (!function_exists("sendMail2")) {
             $mail->Username   = env('MAIL_USERNAME');              // SMTP username
             $mail->Password   = env('MAIL_PASSWORD');                                // SMTP password
             $mail->SMTPSecure = 'tls';                                 // Enable TLS encryption, `ssl` also accepted
-            $mail->Port       = 587;      
+            $mail->Port       = env('MAIL_PORT');      
 
             $mail->setFrom(env("MAIL_FROM_ADDRESS"), env("MAIL_FROM_NAME"));
             $mail->addAddress($email);
