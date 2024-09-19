@@ -100,6 +100,7 @@ class JobController extends Controller
 
         $job = WwphJob::create([
             'title' => $request->title,
+            'slug' => $this->jobSlug($request->title),
             'description' => $request->description,
             'work_type' => $request->work_type,
             'job_type' => $request->job_type,
@@ -127,6 +128,15 @@ class JobController extends Controller
         return okResponse("job created");
     }
 
+    public function jobSlug($title) {
+        $slug = \Illuminate\Support\Str::slug($title);
+        $isJob = WwphJob::where("slug", $slug)->first();
+        if(!$isJob) {
+            return $slug;
+        }
+        $title = $title . substr(str_shuffle("abcdefghijlmnopqrstuvwxyz"), 0, 4);
+        return $this->jobSlug($title);
+    }
     /**
      * Display the specified resource.
      *

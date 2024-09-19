@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Http\Resources\DepartmentJobResource;
 use App\Http\Resources\JobResource;
 use App\Models\Department;
+use App\Models\JobApplication;
 use App\Models\JobDepartment;
 use App\Models\JobType;
 use App\Models\SavedJob;
 use App\Models\WwphJob;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class JobsController extends Controller
 {
@@ -205,5 +207,30 @@ class JobsController extends Controller
     public function destroy($id)
     {
         //
+    }
+    public function apply(Request $request)
+    {
+        $validated = $request->all();
+        $validator = Validator::make($validated, [
+            'job' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            $erro = json_decode($validator->errors(), true);
+            $msg = array_values($erro)[0];
+            return errorResponse($msg[0], $erro);
+        }
+        $job = WwphJob::with("company")->where("id", $request->job)->first();
+        if(!$job) return errorResponse("Invalid job");
+        $hasApplied = JobApplication::where("job_id", $job->id)->where("candidate_id", auth()->user()->id)->first();
+        if($hasApplied) {
+            return errorResponse("You have applied for this Job");
+        }
+        JobApplication::create([
+            "job_id" => $job->id,
+            "candidate_id" => auth()->user()->id,
+            "company_id" => $job->company->id,
+        ]);
+        return okResponse("Job application submitted");
     }
 }

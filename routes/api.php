@@ -41,6 +41,9 @@ Route::group(['middleware' => 'XssSanitizer'], function () {
         });
         Route::get('/resources', [ResourceController::class, 'resource']);
         Route::get('/jobs', [JobsController::class, 'index']);
+        Route::middleware(['verified', 'jwt.verify'])->group(function () {
+            Route::post('/jobs/apply', [JobsController::class, 'apply']);
+        });
         Route::get('/jobs-alert', [JobsController::class, 'alert']);
         Route::get('/jobs/homepage', [JobsController::class, 'homepage']);
         Route::get('/jobs/saved', [JobsController::class, 'saved']);
