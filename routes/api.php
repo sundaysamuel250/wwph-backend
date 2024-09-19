@@ -8,6 +8,7 @@ use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\ResumeController;
 use App\Http\Controllers\UploadsController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\NewsletterController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -61,6 +62,9 @@ Route::group(['middleware' => 'XssSanitizer'], function () {
         Route::prefix("countries")->group(function() {
             Route::get('/', [CountryController::class, 'index']);
             Route::get('/{code}', [CountryController::class, 'show']);
+        });
+        Route::prefix("newsletter")->group(function() {
+            Route::post('/', [NewsletterController::class, 'store']);
         });
 
 
